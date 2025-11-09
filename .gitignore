@@ -148,6 +148,10 @@ venv.bak/
 .schwab_tokens.json
 *_tokens.json
 
+# Application logs
+schwab_app.log
+*.log
+
 # Spyder project settings
 .spyderproject
 .spyproject
