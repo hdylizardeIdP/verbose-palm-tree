@@ -684,7 +684,7 @@ def redact_amount(amount: float) -> str:
 
 def hash_account(account_number: str) -> str:
     """Hash account number for logging"""
-    return hashlib.sha256(account_number.encode()).hexdigest()[:16]
+    return hashlib.sha256(account_number.encode()).hexdigest()
 
 # Updated logging
 logger.info(
