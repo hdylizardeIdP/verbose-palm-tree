@@ -1041,20 +1041,21 @@ async def get_quotes_async(symbols: List[str]) -> Dict:
 
 **Recommendation:**
 ```python
-from functools import lru_cache
-import time
+from cachetools import TTLCache
 
-@lru_cache(maxsize=128)
-def get_quote_cached(symbol: str, ttl_hash: int) -> dict:
-    """Cache quotes with TTL"""
-    return self.client.get_quote(symbol)
+# Create a TTLCache with maxsize 128 and TTL 60 seconds
+quote_cache = TTLCache(maxsize=128, ttl=60)
 
-def get_ttl_hash(seconds=60):
-    """Return hash that changes every N seconds"""
-    return round(time.time() / seconds)
+def get_quote_cached(symbol: str) -> dict:
+    """Cache quotes with TTL using cachetools.TTLCache"""
+    if symbol in quote_cache:
+        return quote_cache[symbol]
+    result = self.client.get_quote(symbol)
+    quote_cache[symbol] = result
+    return result
 
 # Usage
-quote = get_quote_cached("SPY", get_ttl_hash(60))
+quote = get_quote_cached("SPY")
 ```
 
 ---
