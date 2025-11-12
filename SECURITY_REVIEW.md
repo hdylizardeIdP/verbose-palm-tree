@@ -338,7 +338,6 @@ celery==5.3.4
 -r requirements.txt
 pytest==7.4.3
 pytest-cov==4.1.0
-black==23.11.0
 ruff==0.1.6
 mypy==1.7.1
 pre-commit==3.5.0
