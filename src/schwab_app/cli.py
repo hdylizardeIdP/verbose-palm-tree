@@ -142,20 +142,31 @@ def positions(ctx):
 @click.option('--amount', type=float, help='Amount to invest (overrides config)')
 @click.option('--symbols', help='Comma-separated symbols (overrides config)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def dca(ctx, amount, symbols, dry_run):
+def dca(ctx, amount, symbols, dry_run, yes):
     """Execute Dollar Cost Averaging strategy"""
     config = ctx.obj['config']
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     # Use provided values or fall back to config
     invest_amount = amount or config.dca_amount
     symbol_list = symbols.split(',') if symbols else config.dca_symbols
-    
+
     console.print(f"[cyan]Executing DCA: ${invest_amount} across {symbol_list}[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to execute a REAL trade:[/yellow]")
+        console.print(f"   Amount: [bold]${invest_amount:,.2f}[/bold]")
+        console.print(f"   Symbols: [bold]{', '.join(symbol_list)}[/bold]")
+        console.print(f"   Strategy: [bold]Dollar Cost Averaging[/bold]\n")
+        if not click.confirm("Do you want to proceed with this trade?", default=False):
+            console.print("[red]✗ Trade cancelled by user[/red]")
+            return
     
     try:
         strategy = DCAStrategy(client, account_number)
@@ -190,15 +201,24 @@ def dca(ctx, amount, symbols, dry_run):
 
 @main.command()
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def drip(ctx, dry_run):
+def drip(ctx, dry_run, yes):
     """Execute Dividend Reinvestment strategy"""
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     console.print("[cyan]Executing DRIP strategy...[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to execute REAL dividend reinvestment trades[/yellow]")
+        console.print(f"   Strategy: [bold]Dividend Reinvestment (DRIP)[/bold]\n")
+        if not click.confirm("Do you want to proceed with this strategy?", default=False):
+            console.print("[red]✗ Trade cancelled by user[/red]")
+            return
     
     try:
         strategy = DRIPStrategy(client, account_number)
@@ -236,18 +256,29 @@ def drip(ctx, dry_run):
 @main.command()
 @click.option('--threshold', type=float, help='Rebalancing threshold (e.g., 0.05 for 5%)')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def rebalance(ctx, threshold, dry_run):
+def rebalance(ctx, threshold, dry_run, yes):
     """Execute portfolio rebalancing strategy"""
     config = ctx.obj['config']
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     rebal_threshold = threshold or config.rebalance_threshold
-    
+
     console.print(f"[cyan]Executing rebalancing (threshold: {rebal_threshold*100}%)...[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to execute REAL rebalancing trades[/yellow]")
+        console.print(f"   Threshold: [bold]{rebal_threshold*100}%[/bold]")
+        console.print(f"   Strategy: [bold]Portfolio Rebalancing[/bold]")
+        console.print(f"   Target Allocation: [bold]{config.target_allocation}[/bold]\n")
+        if not click.confirm("Do you want to proceed with rebalancing?", default=False):
+            console.print("[red]✗ Rebalancing cancelled by user[/red]")
+            return
     
     try:
         strategy = RebalanceStrategy(client, account_number)
@@ -291,20 +322,31 @@ def rebalance(ctx, threshold, dry_run):
 @click.option('--threshold', type=float, help='Dip threshold (e.g., 0.03 for 3%)')
 @click.option('--amount', type=float, help='Amount to invest per dip')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def opportunistic(ctx, symbols, threshold, amount, dry_run):
+def opportunistic(ctx, symbols, threshold, amount, dry_run, yes):
     """Execute opportunistic buying on market dips"""
     config = ctx.obj['config']
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     watchlist = symbols.split(',') if symbols else config.dca_symbols
     dip_threshold = threshold or config.opportunistic_dip_threshold
     buy_amount = amount or 100.0
-    
+
     console.print(f"[cyan]Scanning for dips (threshold: {dip_threshold*100}%)...[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to execute REAL opportunistic trades[/yellow]")
+        console.print(f"   Dip Threshold: [bold]{dip_threshold*100}%[/bold]")
+        console.print(f"   Buy Amount per Dip: [bold]${buy_amount:,.2f}[/bold]")
+        console.print(f"   Watchlist: [bold]{', '.join(watchlist)}[/bold]\n")
+        if not click.confirm("Do you want to proceed with opportunistic buying?", default=False):
+            console.print("[red]✗ Trade cancelled by user[/red]")
+            return
     
     try:
         strategy = OpportunisticStrategy(client, account_number)
@@ -345,17 +387,28 @@ def opportunistic(ctx, symbols, threshold, amount, dry_run):
 @main.command()
 @click.option('--symbols', help='Comma-separated symbols for covered calls')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def covered_calls(ctx, symbols, dry_run):
+def covered_calls(ctx, symbols, dry_run, yes):
     """Sell covered calls on existing positions"""
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     symbol_list = symbols.split(',') if symbols else None
-    
+
     console.print("[cyan]Executing covered call strategy...[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to sell REAL covered call options[/yellow]")
+        console.print(f"   Symbols: [bold]{', '.join(symbol_list) if symbol_list else 'All positions'}[/bold]")
+        console.print(f"   Strategy: [bold]Covered Calls[/bold]\n")
+        console.print("[yellow]Note: Selling covered calls may limit upside potential[/yellow]\n")
+        if not click.confirm("Do you want to proceed with selling covered calls?", default=False):
+            console.print("[red]✗ Trade cancelled by user[/red]")
+            return
     
     try:
         strategy = OptionsStrategy(client, account_number)
@@ -395,17 +448,28 @@ def covered_calls(ctx, symbols, dry_run):
 @main.command()
 @click.option('--symbols', help='Comma-separated symbols for protective puts')
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing')
+@click.option('--yes', '-y', is_flag=True, help='Skip confirmation prompt')
 @click.pass_context
-def protective_puts(ctx, symbols, dry_run):
+def protective_puts(ctx, symbols, dry_run, yes):
     """Buy protective puts on existing positions"""
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
-    
+
     symbol_list = symbols.split(',') if symbols else None
-    
+
     console.print("[cyan]Executing protective put strategy...[/cyan]")
     if dry_run:
         console.print("[yellow]DRY RUN - No orders will be placed[/yellow]")
+
+    # Require confirmation for real trades
+    if not dry_run and not yes:
+        console.print(f"\n[yellow]⚠️  You are about to buy REAL protective put options[/yellow]")
+        console.print(f"   Symbols: [bold]{', '.join(symbol_list) if symbol_list else 'All positions'}[/bold]")
+        console.print(f"   Strategy: [bold]Protective Puts (Insurance)[/bold]\n")
+        console.print("[yellow]Note: Protective puts cost premium but provide downside protection[/yellow]\n")
+        if not click.confirm("Do you want to proceed with buying protective puts?", default=False):
+            console.print("[red]✗ Trade cancelled by user[/red]")
+            return
     
     try:
         strategy = OptionsStrategy(client, account_number)
