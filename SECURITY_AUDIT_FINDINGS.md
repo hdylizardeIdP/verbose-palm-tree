@@ -96,11 +96,7 @@ def dca(ctx, amount, symbols, dry_run):
 ```bash
 # User could accidentally or maliciously pass negative amounts
 $ schwab-app dca --amount=-1000 --symbols=SPY
-# Results in sell orders instead of buy orders!
-```
-
-**Impact:**
-- Negative amounts could trigger unexpected sell orders
+# Most broker APIs will reject negative amounts or behave unpredictably.
 - Extremely large amounts could exceed account balance (rejected by broker but wastes API calls)
 - Zero amounts cause division by zero
 - Float precision issues with very large numbers
