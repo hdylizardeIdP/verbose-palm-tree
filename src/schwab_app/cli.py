@@ -15,7 +15,13 @@ from schwab_app.strategies import (
     OpportunisticStrategy,
     OptionsStrategy,
 )
-from schwab_app.utils import setup_logging
+from schwab_app.utils import (
+    setup_logging,
+    ValidationError,
+    validate_amount,
+    validate_symbols,
+    validate_threshold,
+)
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -150,9 +156,19 @@ def dca(ctx, amount, symbols, dry_run, yes):
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
 
-    # Use provided values or fall back to config
-    invest_amount = amount or config.dca_amount
-    symbol_list = symbols.split(',') if symbols else config.dca_symbols
+    try:
+        # Use provided values or fall back to config
+        invest_amount = amount or config.dca_amount
+        symbol_list = symbols.split(',') if symbols else config.dca_symbols
+
+        # Validate inputs
+        invest_amount = validate_amount(invest_amount, field_name="Investment amount")
+        symbol_list = validate_symbols(symbol_list)
+
+    except ValidationError as e:
+        console.print(f"[red]✗ Validation Error: {e}[/red]")
+        logger.error(f"Input validation failed for DCA: {e}")
+        raise click.Abort()
 
     console.print(f"[cyan]Executing DCA: ${invest_amount} across {symbol_list}[/cyan]")
     if dry_run:
@@ -264,7 +280,21 @@ def rebalance(ctx, threshold, dry_run, yes):
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
 
-    rebal_threshold = threshold or config.rebalance_threshold
+    try:
+        rebal_threshold = threshold or config.rebalance_threshold
+
+        # Validate threshold
+        rebal_threshold = validate_threshold(
+            rebal_threshold,
+            min_threshold=0.001,  # 0.1% minimum
+            max_threshold=0.5,    # 50% maximum
+            field_name="Rebalancing threshold"
+        )
+
+    except ValidationError as e:
+        console.print(f"[red]✗ Validation Error: {e}[/red]")
+        logger.error(f"Input validation failed for rebalance: {e}")
+        raise click.Abort()
 
     console.print(f"[cyan]Executing rebalancing (threshold: {rebal_threshold*100}%)...[/cyan]")
     if dry_run:
@@ -330,9 +360,25 @@ def opportunistic(ctx, symbols, threshold, amount, dry_run, yes):
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
 
-    watchlist = symbols.split(',') if symbols else config.dca_symbols
-    dip_threshold = threshold or config.opportunistic_dip_threshold
-    buy_amount = amount or 100.0
+    try:
+        watchlist = symbols.split(',') if symbols else config.dca_symbols
+        dip_threshold = threshold or config.opportunistic_dip_threshold
+        buy_amount = amount or 100.0
+
+        # Validate inputs
+        watchlist = validate_symbols(watchlist)
+        dip_threshold = validate_threshold(
+            dip_threshold,
+            min_threshold=0.001,  # 0.1% minimum
+            max_threshold=0.5,    # 50% maximum
+            field_name="Dip threshold"
+        )
+        buy_amount = validate_amount(buy_amount, field_name="Buy amount")
+
+    except ValidationError as e:
+        console.print(f"[red]✗ Validation Error: {e}[/red]")
+        logger.error(f"Input validation failed for opportunistic: {e}")
+        raise click.Abort()
 
     console.print(f"[cyan]Scanning for dips (threshold: {dip_threshold*100}%)...[/cyan]")
     if dry_run:
@@ -394,7 +440,17 @@ def covered_calls(ctx, symbols, dry_run, yes):
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
 
-    symbol_list = symbols.split(',') if symbols else None
+    try:
+        symbol_list = symbols.split(',') if symbols else None
+
+        # Validate symbols if provided
+        if symbol_list:
+            symbol_list = validate_symbols(symbol_list)
+
+    except ValidationError as e:
+        console.print(f"[red]✗ Validation Error: {e}[/red]")
+        logger.error(f"Input validation failed for covered_calls: {e}")
+        raise click.Abort()
 
     console.print("[cyan]Executing covered call strategy...[/cyan]")
     if dry_run:
@@ -455,7 +511,17 @@ def protective_puts(ctx, symbols, dry_run, yes):
     client = ctx.obj['client']
     account_number = ctx.obj['account_number']
 
-    symbol_list = symbols.split(',') if symbols else None
+    try:
+        symbol_list = symbols.split(',') if symbols else None
+
+        # Validate symbols if provided
+        if symbol_list:
+            symbol_list = validate_symbols(symbol_list)
+
+    except ValidationError as e:
+        console.print(f"[red]✗ Validation Error: {e}[/red]")
+        logger.error(f"Input validation failed for protective_puts: {e}")
+        raise click.Abort()
 
     console.print("[cyan]Executing protective put strategy...[/cyan]")
     if dry_run:

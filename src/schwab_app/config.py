@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from typing import Optional
 import json
+from schwab_app.utils.validation import validate_allocation, ValidationError
 
 
 class Config:
@@ -54,15 +55,24 @@ class Config:
         self.log_file = os.getenv("LOG_FILE", "schwab_app.log")
     
     def _load_target_allocation(self) -> dict:
-        """Load target portfolio allocation from environment or file"""
+        """Load and validate target portfolio allocation from environment or file"""
         allocation_str = os.getenv("TARGET_ALLOCATION", "")
+
         if allocation_str:
+            # Limit size to prevent DoS
+            if len(allocation_str) > 10000:  # 10KB limit
+                raise ValueError("TARGET_ALLOCATION too large (max 10KB)")
+
             try:
-                return json.loads(allocation_str)
-            except json.JSONDecodeError:
-                pass
-        
-        # Default allocation
+                allocation = json.loads(allocation_str)
+                # Validate the allocation
+                return validate_allocation(allocation)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in TARGET_ALLOCATION: {e}")
+            except ValidationError as e:
+                raise ValueError(f"Invalid allocation in TARGET_ALLOCATION: {e}")
+
+        # Default allocation (pre-validated)
         return {
             "SPY": 0.40,  # 40% S&P 500
             "QQQ": 0.30,  # 30% Nasdaq
