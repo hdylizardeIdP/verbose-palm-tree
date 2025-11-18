@@ -159,7 +159,7 @@ def dca(ctx, amount, symbols, dry_run, yes):
     try:
         # Use provided values or fall back to config
         invest_amount = amount or config.dca_amount
-        symbol_list = symbols.split(',') if symbols else config.dca_symbols
+        symbol_list = symbols.split(',') if symbols is not None else config.dca_symbols
 
         # Validate inputs
         invest_amount = validate_amount(invest_amount, field_name="Investment amount")
