@@ -361,7 +361,7 @@ def opportunistic(ctx, symbols, threshold, amount, dry_run, yes):
     account_number = ctx.obj['account_number']
 
     try:
-        watchlist = symbols.split(',') if symbols else config.dca_symbols
+        watchlist = symbols.split(',') if symbols is not None else config.dca_symbols
         dip_threshold = threshold or config.opportunistic_dip_threshold
         buy_amount = amount or 100.0
 
