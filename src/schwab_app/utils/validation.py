@@ -339,7 +339,7 @@ def validate_allocation(
 
         if percentage <= 0 or percentage > 1:
             raise ValidationError(
-                f"Percentage for {symbol} must be between 0 and 1, "
+                f"Percentage for {symbol} must be greater than 0 and less than or equal to 1, "
                 f"got {percentage}"
             )
 
