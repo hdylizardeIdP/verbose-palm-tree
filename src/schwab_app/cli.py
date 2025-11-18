@@ -441,7 +441,7 @@ def covered_calls(ctx, symbols, dry_run, yes):
     account_number = ctx.obj['account_number']
 
     try:
-        symbol_list = symbols.split(',') if symbols else None
+        symbol_list = symbols.split(',') if symbols is not None else None
 
         # Validate symbols if provided
         if symbol_list:
