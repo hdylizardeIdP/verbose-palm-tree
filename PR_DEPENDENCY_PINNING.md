@@ -37,7 +37,7 @@ click==8.1.7        # ✅ Reproducible across environments
 | pandas | >=2.1.0 | ==2.2.3 | Latest stable |
 | numpy | >=1.24.0 | ==1.26.4 | Latest stable |
 | schedule | >=1.2.0 | ==1.2.2 | Latest stable |
-| python-json-logger | >=2.0.7 | ==2.0.7 | Already pinned |
+| python-json-logger | >=2.0.7 | ==2.0.7 | Latest stable |
 
 ---
 
