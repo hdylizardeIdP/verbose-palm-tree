@@ -233,7 +233,7 @@ This is a **5-minute quick win** that:
 
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
-| Overall Security | ~45% | ~50% | **+11%** |
+| Overall Security | ~45% | ~50% | **+5 points** |
 | Critical Issues Fixed | 4/11 | 5/11 | **45%** |
 | Dependency Security | ❌ | ✅ | Fixed |
 
