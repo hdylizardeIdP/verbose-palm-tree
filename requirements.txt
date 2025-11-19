@@ -1,18 +1,46 @@
-# Core dependencies
-requests>=2.31.0
-schwab-py>=1.4.0
-python-dotenv>=1.0.0
+# Core dependencies - PINNED for security (prevent supply chain attacks)
+# Last updated: 2025-11-10
+# Update regularly but verify changes before deploying
+
+# HTTP library (updated from 2.32.3 due to GHSA-9hjg-9r4m-mvj7)
+requests==2.32.4
+# Schwab API client
+schwab-py==1.5.1
+# Environment variable management
+python-dotenv==1.0.1
 
 # CLI and UI
-click>=8.1.0
-rich>=13.7.0
+# Command-line interface framework
+click==8.1.7
+# Rich terminal formatting
+rich==13.9.4
 
 # Data processing
-pandas>=2.1.0
-numpy>=1.24.0
+# Data analysis library
+pandas==2.2.3
+# Numerical computing
+numpy==1.26.4
 
 # Scheduling and automation
-schedule>=1.2.0
+# Job scheduling library
+schedule==1.2.2
 
 # Logging
-python-json-logger>=2.0.7
+# JSON logging formatter
+python-json-logger==2.0.7
+
+# Security Notes:
+# - All versions pinned with == to prevent automatic updates
+# - Verify each update before deploying to production
+# - Run 'pip-audit' before updating: pip install pip-audit && pip-audit
+# - Check for CVEs: https://github.com/pypa/advisory-database
+#
+# To update safely:
+# 1. Check for vulnerabilities: pip-audit -r requirements.txt
+# 2. Review changelogs for each package
+# 3. Test in development environment
+# 4. Update one package at a time
+# 5. Run full test suite after each update
+#
+# For additional security, generate hashes:
+# pip-compile --generate-hashes requirements.in
