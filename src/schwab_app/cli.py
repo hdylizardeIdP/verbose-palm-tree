@@ -48,7 +48,8 @@ def main(ctx, env_file, log_level):
             config.api_key,
             config.app_secret,
             config.callback_url,
-            config.token_path
+            config.token_path,
+            encryption_key=config.token_encryption_key,
         )
         ctx.obj['client'] = client
         ctx.obj['account_number'] = config.account_number

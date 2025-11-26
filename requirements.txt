@@ -29,6 +29,10 @@ schedule==1.2.2
 # JSON logging formatter
 python-json-logger==2.0.7
 
+# Security
+# Cryptographic primitives for token encryption
+cryptography==43.0.3
+
 # Security Notes:
 # - All versions pinned with == to prevent automatic updates
 # - Verify each update before deploying to production

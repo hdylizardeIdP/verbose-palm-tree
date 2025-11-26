@@ -2,65 +2,171 @@
 Schwab API client wrapper
 """
 import logging
-from typing import Optional, List, Dict, Any
+import os
+from typing import Optional, List, Dict, Any, Callable
 from schwab import auth, client
 from schwab.client import Client
 import json
 from pathlib import Path
 
+from schwab_app.utils.token_encryption import (
+    TokenEncryption,
+    TokenEncryptionError,
+    is_encrypted_token_file,
+    migrate_plain_text_tokens,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class SchwabClient:
-    """Wrapper for Schwab API client"""
-    
-    def __init__(self, api_key: str, app_secret: str, callback_url: str, token_path: str):
+    """Wrapper for Schwab API client with encrypted token storage"""
+
+    def __init__(
+        self,
+        api_key: str,
+        app_secret: str,
+        callback_url: str,
+        token_path: str,
+        encryption_key: Optional[str] = None,
+    ):
         """
-        Initialize Schwab API client
-        
+        Initialize Schwab API client with encrypted token storage.
+
         Args:
             api_key: Schwab API key
             app_secret: Schwab app secret
             callback_url: OAuth callback URL
-            token_path: Path to store OAuth tokens
+            token_path: Path to store OAuth tokens (will be encrypted)
+            encryption_key: Encryption key for token storage. If None, uses
+                          SCHWAB_TOKEN_ENCRYPTION_KEY environment variable.
+
+        Raises:
+            TokenEncryptionError: If encryption key is not available.
         """
         self.api_key = api_key
         self.app_secret = app_secret
         self.callback_url = callback_url
         self.token_path = Path(token_path)
         self._client: Optional[Client] = None
-    
+
+        # Initialize token encryption
+        self._encryption = TokenEncryption(encryption_key)
+
+        # Check for and migrate plain text tokens if they exist
+        self._migrate_existing_tokens()
+
+    def _migrate_existing_tokens(self) -> None:
+        """Migrate existing plain text tokens to encrypted format."""
+        if not self.token_path.exists():
+            return
+
+        if not is_encrypted_token_file(self.token_path):
+            logger.warning(
+                "Found plain text token file. Migrating to encrypted format..."
+            )
+            try:
+                # Read the plain text tokens
+                with open(self.token_path, 'r') as f:
+                    token_data = json.load(f)
+
+                # Encrypt and save
+                self._encryption.save_encrypted_tokens(token_data, self.token_path)
+                logger.info("Successfully migrated tokens to encrypted format")
+            except Exception as e:
+                logger.error(f"Failed to migrate tokens: {e}")
+                raise TokenEncryptionError(
+                    f"Failed to migrate plain text tokens to encrypted format: {e}"
+                )
+
+    def _create_token_write_callback(self) -> Callable[[dict], None]:
+        """Create a callback function for writing tokens with encryption."""
+        def write_token(token_data: dict) -> None:
+            self._encryption.save_encrypted_tokens(token_data, self.token_path)
+        return write_token
+
+    def _load_tokens(self) -> Optional[dict]:
+        """Load and decrypt tokens from file."""
+        if not self.token_path.exists():
+            return None
+        return self._encryption.load_encrypted_tokens(self.token_path)
+
     def authenticate(self) -> Client:
         """
-        Authenticate with Schwab API
-        
+        Authenticate with Schwab API using encrypted token storage.
+
         Returns:
             Authenticated Schwab client
+
+        Raises:
+            TokenEncryptionError: If token encryption/decryption fails.
+            Exception: If authentication fails.
         """
         try:
-            # Try to use existing token
+            # Try to use existing encrypted token
             if self.token_path.exists():
-                logger.info("Using existing token file")
-                self._client = auth.client_from_token_file(
-                    self.token_path,
-                    self.api_key,
-                    self.app_secret
-                )
+                logger.info("Loading encrypted token file")
+                try:
+                    token_data = self._load_tokens()
+                    if token_data:
+                        # Create a temporary decrypted file for schwab-py
+                        # Then immediately re-encrypt after client creation
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(
+                            mode='w', suffix='.json', delete=False
+                        ) as tmp:
+                            json.dump(token_data, tmp)
+                            tmp_path = tmp.name
+
+                        try:
+                            self._client = auth.client_from_token_file(
+                                tmp_path,
+                                self.api_key,
+                                self.app_secret,
+                                token_write_func=self._create_token_write_callback()
+                            )
+                        finally:
+                            # Always clean up temp file
+                            Path(tmp_path).unlink(missing_ok=True)
+                except TokenEncryptionError as e:
+                    logger.error(f"Failed to decrypt tokens: {e}")
+                    raise
             else:
-                # Perform OAuth flow
+                # Perform OAuth flow with encrypted token storage
                 logger.info("Performing OAuth authentication")
-                self._client = auth.client_from_manual_flow(
-                    self.api_key,
-                    self.app_secret,
-                    self.callback_url,
-                    self.token_path
-                )
-            
+                import tempfile
+                with tempfile.NamedTemporaryFile(
+                    mode='w', suffix='.json', delete=False
+                ) as tmp:
+                    tmp_path = tmp.name
+
+                try:
+                    self._client = auth.client_from_manual_flow(
+                        self.api_key,
+                        self.app_secret,
+                        self.callback_url,
+                        tmp_path,
+                        token_write_func=self._create_token_write_callback()
+                    )
+                    # Also encrypt the initial token file created by manual flow
+                    if Path(tmp_path).exists():
+                        with open(tmp_path, 'r') as f:
+                            initial_tokens = json.load(f)
+                        self._encryption.save_encrypted_tokens(
+                            initial_tokens, self.token_path
+                        )
+                finally:
+                    # Clean up temp file
+                    Path(tmp_path).unlink(missing_ok=True)
+
             logger.info("Successfully authenticated with Schwab API")
             return self._client
-        except Exception as e:
-            logger.error(f"Authentication failed: {e}")
+        except TokenEncryptionError:
             raise
+        except Exception as e:
+            # Sanitize error message to avoid exposing sensitive details
+            logger.error("Authentication failed")
+            raise RuntimeError("Authentication failed. Check credentials and try again.")
     
     def get_client(self) -> Client:
         """Get authenticated client, authenticating if necessary"""
