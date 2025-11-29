@@ -31,7 +31,8 @@ python-json-logger==2.0.7
 
 # Security
 # Cryptographic primitives for token encryption
-cryptography==43.0.3
+# Updated from 43.0.3 due to GHSA-79v4-65xg-pq4g (OpenSSL vulnerability)
+cryptography==44.0.1
 
 # Security Notes:
 # - All versions pinned with == to prevent automatic updates

@@ -71,8 +71,9 @@ class TokenEncryption:
             # Valid Fernet keys are 44 characters of URL-safe base64
             if len(key_source) == 44:
                 return Fernet(key_source.encode())
-        except Exception:
-            pass
+        except (ValueError, TypeError):
+            # Not a valid Fernet key format, fall through to passphrase derivation
+            logger.debug("Key source is not a valid Fernet key, deriving from passphrase")
 
         # Derive a key from the passphrase using PBKDF2
         # Use a fixed salt for deterministic key derivation
