@@ -29,6 +29,11 @@ schedule==1.2.2
 # JSON logging formatter
 python-json-logger==2.0.7
 
+# Security
+# Cryptographic primitives for token encryption
+# Updated from 43.0.3 due to GHSA-79v4-65xg-pq4g (OpenSSL vulnerability)
+cryptography==44.0.1
+
 # Security Notes:
 # - All versions pinned with == to prevent automatic updates
 # - Verify each update before deploying to production
