@@ -29,6 +29,10 @@ class Config:
         self.app_secret = os.getenv("SCHWAB_APP_SECRET", "")
         self.callback_url = os.getenv("SCHWAB_CALLBACK_URL", "https://localhost:8182")
         self.token_path = os.getenv("SCHWAB_TOKEN_PATH", ".schwab_tokens.json")
+
+        # Token encryption key (required for secure token storage)
+        # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+        self.token_encryption_key = os.getenv("SCHWAB_TOKEN_ENCRYPTION_KEY", "")
         
         # Account configuration
         self.account_number = os.getenv("SCHWAB_ACCOUNT_NUMBER", "")
@@ -83,12 +87,20 @@ class Config:
     def validate(self) -> bool:
         """
         Validate configuration
-        
+
         Returns:
             True if configuration is valid
+
+        Raises:
+            ValueError: If required configuration is missing.
         """
         if not self.api_key:
             raise ValueError("SCHWAB_API_KEY is required")
         if not self.app_secret:
             raise ValueError("SCHWAB_APP_SECRET is required")
+        if not self.token_encryption_key:
+            raise ValueError(
+                "SCHWAB_TOKEN_ENCRYPTION_KEY is required for secure token storage. "
+                "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
         return True
