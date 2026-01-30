@@ -7,10 +7,13 @@ Provides comprehensive validation for all user inputs to prevent:
 - Invalid thresholds and percentages
 - JSON injection attacks
 - Overflow and precision errors
+- Path traversal attacks
 """
 import re
 import math
-from typing import List, Dict, Union
+import os
+from pathlib import Path
+from typing import List, Dict, Union, Optional
 
 
 class ValidationError(ValueError):
@@ -395,3 +398,186 @@ def sanitize_for_log(value: str, max_length: int = 100) -> str:
         value = value[:max_length] + '...'
 
     return value
+
+
+def validate_path(
+    path: Union[str, Path, None],
+    allowed_dir: Optional[Union[str, Path]] = None,
+    must_exist: bool = False,
+    allow_absolute: bool = True,
+    field_name: str = "Path"
+) -> Path:
+    """
+    Validate file path to prevent path traversal attacks.
+
+    Args:
+        path: Path to validate
+        allowed_dir: If specified, path must be within this directory
+        must_exist: If True, path must exist
+        allow_absolute: If False, only relative paths allowed
+        field_name: Name of field for error messages
+
+    Returns:
+        Validated Path object
+
+    Raises:
+        ValidationError: If path is invalid or traversal detected
+
+    Examples:
+        >>> validate_path(".tokens.json")
+        PosixPath('.tokens.json')
+        >>> validate_path("../../../etc/passwd")
+        ValidationError: Path traversal detected
+        >>> validate_path("/etc/passwd", allowed_dir="/home/user")
+        ValidationError: Path outside allowed directory
+    """
+    # Check for None
+    if path is None:
+        raise ValidationError(f"{field_name} is required")
+
+    # Convert to string first for validation
+    if isinstance(path, Path):
+        path_str = str(path)
+    elif isinstance(path, str):
+        path_str = path
+    else:
+        raise ValidationError(
+            f"{field_name} must be a string or Path, got {type(path).__name__}"
+        )
+
+    # Check for empty
+    if not path_str.strip():
+        raise ValidationError(f"{field_name} cannot be empty")
+
+    # Check for null bytes (security risk)
+    if '\x00' in path_str:
+        raise ValidationError(f"{field_name} contains invalid characters")
+
+    # Check length
+    if len(path_str) > 4096:
+        raise ValidationError(f"{field_name} too long (max 4096 characters)")
+
+    # Convert to Path object
+    path_obj = Path(path_str)
+
+    # Check for absolute paths if not allowed
+    if not allow_absolute and path_obj.is_absolute():
+        raise ValidationError(
+            f"{field_name} must be a relative path, got absolute: {path_str}"
+        )
+
+    # Check for path traversal patterns
+    # Resolve to absolute to detect traversal
+    try:
+        if allowed_dir:
+            allowed_dir = Path(allowed_dir).resolve()
+            resolved = (allowed_dir / path_obj).resolve()
+
+            # Check if resolved path is within allowed directory
+            try:
+                resolved.relative_to(allowed_dir)
+            except ValueError:
+                raise ValidationError(
+                    f"{field_name} must be within {allowed_dir}, "
+                    f"path traversal detected"
+                )
+        else:
+            # Just resolve to check for obvious traversal
+            resolved = path_obj.resolve()
+
+            # Check for suspicious patterns even without allowed_dir
+            suspicious_patterns = ['..', '/etc/', '/var/', '/usr/', '/root/']
+            for pattern in suspicious_patterns:
+                if pattern in path_str:
+                    raise ValidationError(
+                        f"{field_name} contains suspicious pattern: {pattern}"
+                    )
+    except OSError as e:
+        raise ValidationError(f"{field_name} is invalid: {e}")
+
+    # Check existence if required
+    if must_exist and not path_obj.exists():
+        raise ValidationError(f"{field_name} does not exist: {path_str}")
+
+    return path_obj
+
+
+def redact_sensitive(
+    value: str,
+    visible_chars: int = 4,
+    redact_char: str = "*"
+) -> str:
+    """
+    Redact sensitive data for logging, keeping only last few characters visible.
+
+    Args:
+        value: Sensitive value to redact
+        visible_chars: Number of characters to keep visible at the end
+        redact_char: Character to use for redaction
+
+    Returns:
+        Redacted string
+
+    Examples:
+        >>> redact_sensitive("1234567890")
+        '******7890'
+        >>> redact_sensitive("ABC")
+        '***'
+        >>> redact_sensitive("secret_key_12345", visible_chars=5)
+        '***********12345'
+    """
+    if not value:
+        return ""
+
+    value_str = str(value)
+    length = len(value_str)
+
+    if length <= visible_chars:
+        # If value is shorter than visible chars, redact everything
+        return redact_char * length
+
+    # Keep last N characters visible
+    redacted_part = redact_char * (length - visible_chars)
+    visible_part = value_str[-visible_chars:]
+    return redacted_part + visible_part
+
+
+def redact_account_number(account_number: str) -> str:
+    """
+    Redact account number for logging (show only last 4 digits).
+
+    Args:
+        account_number: Account number to redact
+
+    Returns:
+        Redacted account number
+
+    Examples:
+        >>> redact_account_number("123456789012")
+        '********9012'
+    """
+    return redact_sensitive(account_number, visible_chars=4)
+
+
+def redact_amount(amount: float) -> str:
+    """
+    Redact amount for logging (show magnitude only).
+
+    Args:
+        amount: Dollar amount to redact
+
+    Returns:
+        Redacted amount string showing magnitude
+
+    Examples:
+        >>> redact_amount(12345.67)
+        '$*****.**'
+        >>> redact_amount(100.00)
+        '$***.**'
+    """
+    if amount is None:
+        return "$*.**"
+
+    # Show only the magnitude (number of digits)
+    magnitude = len(str(int(abs(amount))))
+    return f"${'*' * magnitude}.**"
