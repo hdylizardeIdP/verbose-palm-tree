@@ -572,5 +572,23 @@ def protective_puts(ctx, symbols, dry_run, yes):
         logger.error(f"Protective put strategy failed: {e}")
 
 
+@main.command()
+@click.option('--host', default='127.0.0.1', help='Bind address')
+@click.option('--port', default=5000, type=int, help='Port number')
+@click.option('--debug', is_flag=True, help='Enable debug mode')
+@click.pass_context
+def dashboard(ctx, host, port, debug):
+    """Launch the web-based investment dashboard"""
+    from schwab_app.dashboard import create_app
+
+    config = ctx.obj['config']
+    app = create_app(log_level=config.log_level)
+
+    console.print(f"[cyan]Starting Schwab Investment Dashboard...[/cyan]")
+    console.print(f"[green]  http://{host}:{port}[/green]")
+    console.print(f"[dim]  Press Ctrl+C to stop[/dim]\n")
+    app.run(host=host, port=port, debug=debug)
+
+
 if __name__ == '__main__':
     main()

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings & Configuration{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <div class="alert alert-secondary py-2 small">
+        <i class="bi bi-info-circle me-1"></i>
+        Configuration is loaded from your <code>.env</code> file. Edit the file and restart the dashboard to apply changes.
+    </div>
+</div>
+
+<div id="settings-content">
+    <div class="text-center text-muted py-4">Loading configuration...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadData() { loadSettingsData(); }
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+{% endblock %}

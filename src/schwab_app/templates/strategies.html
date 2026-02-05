@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Strategies{% endblock %}
+{% block page_title %}Strategies{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- DCA Strategy -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <h6>Dollar Cost Averaging</h6>
+            <p>Invest a fixed amount across multiple symbols at regular intervals.</p>
+            <form onsubmit="return runDCA(event)">
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label small">Amount ($)</label>
+                        <input type="number" class="form-control form-control-sm" id="dca-amount"
+                               value="{{ config.dca_amount }}" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label small">Symbols (comma-separated)</label>
+                        <input type="text" class="form-control form-control-sm" id="dca-symbols"
+                               value="{{ config.dca_symbols | join(',') }}" placeholder="SPY,QQQ,VTI" required>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-primary btn-sm" id="btn-DCA">
+                        <i class="bi bi-play-fill me-1"></i>Run DCA
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="dca-dry-run" checked>
+                        <label class="form-check-label small" for="dca-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DRIP Strategy -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-droplet-half"></i>
+            </div>
+            <h6>Dividend Reinvestment (DRIP)</h6>
+            <p>Automatically reinvest available cash proportionally across dividend-paying positions.</p>
+            <form onsubmit="return runDRIP(event)">
+                <div class="mb-3">
+                    <small class="text-muted">No parameters needed - reinvests available cash across existing positions.</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-success btn-sm" id="btn-DRIP">
+                        <i class="bi bi-play-fill me-1"></i>Run DRIP
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="drip-dry-run" checked>
+                        <label class="form-check-label small" for="drip-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rebalance Strategy -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-sliders"></i>
+            </div>
+            <h6>Portfolio Rebalancing</h6>
+            <p>Rebalance your portfolio to match your target allocation when deviation exceeds threshold.</p>
+            <form onsubmit="return runRebalance(event)">
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label small">Threshold (%)</label>
+                        <input type="number" class="form-control form-control-sm" id="rebal-threshold"
+                               value="{{ (config.rebalance_threshold * 100) | round(1) }}" min="0.1" max="50" step="0.1" required>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label small">Target Allocation</label>
+                        <div class="mt-1">
+                            {% for sym, pct in config.target_allocation.items() %}
+                            <span class="badge bg-info bg-opacity-25 text-info me-1">{{ sym }}: {{ (pct * 100) | round(0) | int }}%</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-info btn-sm" id="btn-Rebalance">
+                        <i class="bi bi-play-fill me-1"></i>Rebalance
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="rebal-dry-run" checked>
+                        <label class="form-check-label small" for="rebal-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Opportunistic Strategy -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-graph-down-arrow"></i>
+            </div>
+            <h6>Opportunistic Buying</h6>
+            <p>Scan for price dips and automatically buy when a dip exceeds the threshold.</p>
+            <form onsubmit="return runOpportunistic(event)">
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-4">
+                        <label class="form-label small">Symbols</label>
+                        <input type="text" class="form-control form-control-sm" id="opp-symbols"
+                               value="{{ config.dca_symbols | join(',') }}" placeholder="SPY,QQQ" required>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small">Dip Threshold (%)</label>
+                        <input type="number" class="form-control form-control-sm" id="opp-threshold"
+                               value="{{ (config.opportunistic_dip_threshold * 100) | round(1) }}" min="0.1" max="50" step="0.1" required>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small">Amount ($)</label>
+                        <input type="number" class="form-control form-control-sm" id="opp-amount"
+                               value="100" min="0.01" step="0.01" required>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-warning btn-sm" id="btn-Opportunistic">
+                        <i class="bi bi-play-fill me-1"></i>Scan & Buy
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="opp-dry-run" checked>
+                        <label class="form-check-label small" for="opp-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Covered Calls -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-telephone-outbound"></i>
+            </div>
+            <h6>Covered Calls</h6>
+            <p>Sell covered call options on positions with 100+ shares for premium income.</p>
+            <form onsubmit="return runCoveredCalls(event)">
+                <div class="mb-3">
+                    <label class="form-label small">Symbols (blank = all eligible positions)</label>
+                    <input type="text" class="form-control form-control-sm" id="cc-symbols"
+                           placeholder="AAPL,MSFT (optional)">
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-danger btn-sm" id="btn-Covered Calls">
+                        <i class="bi bi-play-fill me-1"></i>Sell Calls
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="cc-dry-run" checked>
+                        <label class="form-check-label small" for="cc-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Protective Puts -->
+    <div class="col-lg-6">
+        <div class="strategy-card">
+            <div class="strategy-icon" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h6>Protective Puts</h6>
+            <p>Buy protective put options on positions with 100+ shares for downside protection.</p>
+            <form onsubmit="return runProtectivePuts(event)">
+                <div class="mb-3">
+                    <label class="form-label small">Symbols (blank = all eligible positions)</label>
+                    <input type="text" class="form-control form-control-sm" id="pp-symbols"
+                           placeholder="AAPL,MSFT (optional)">
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-sm" style="background: #6f42c1; color: white;" id="btn-Protective Puts">
+                        <i class="bi bi-play-fill me-1"></i>Buy Puts
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="pp-dry-run" checked>
+                        <label class="form-check-label small" for="pp-dry-run">Dry Run</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Results Area -->
+<div id="strategy-results" class="mt-4"></div>
+
+<!-- Confirmation Modal for Live Trades -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Live Trade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirm-body">
+                <p class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>You are about to execute a <strong>LIVE</strong> trade. This will place real orders.</p>
+                <div id="confirm-details"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="confirm-execute">
+                    <i class="bi bi-check-lg me-1"></i>Execute Live Trade
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let pendingExecution = null;
+
+    function confirmLive(name, details, callback) {
+        document.getElementById('confirm-details').innerHTML = details;
+        pendingExecution = callback;
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+    }
+
+    document.getElementById('confirm-execute').addEventListener('click', function() {
+        if (pendingExecution) {
+            pendingExecution();
+            pendingExecution = null;
+        }
+        bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+    });
+
+    function runDCA(e) {
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('dca-amount').value);
+        const symbols = document.getElementById('dca-symbols').value;
+        const dryRun = document.getElementById('dca-dry-run').checked;
+
+        const payload = { amount, symbols, dryRun };
+
+        if (!dryRun) {
+            confirmLive('DCA', `<p>Amount: <strong>$${amount}</strong></p><p>Symbols: <strong>${symbols}</strong></p>`, function() {
+                executeStrategy('DCA', '/api/strategies/dca', payload);
+            });
+        } else {
+            executeStrategy('DCA', '/api/strategies/dca', payload);
+        }
+        return false;
+    }
+
+    function runDRIP(e) {
+        e.preventDefault();
+        const dryRun = document.getElementById('drip-dry-run').checked;
+        const payload = { dryRun };
+
+        if (!dryRun) {
+            confirmLive('DRIP', '<p>Reinvest all available cash proportionally across dividend positions.</p>', function() {
+                executeStrategy('DRIP', '/api/strategies/drip', payload);
+            });
+        } else {
+            executeStrategy('DRIP', '/api/strategies/drip', payload);
+        }
+        return false;
+    }
+
+    function runRebalance(e) {
+        e.preventDefault();
+        const threshold = parseFloat(document.getElementById('rebal-threshold').value) / 100;
+        const dryRun = document.getElementById('rebal-dry-run').checked;
+        const payload = { threshold, dryRun };
+
+        if (!dryRun) {
+            confirmLive('Rebalance', `<p>Threshold: <strong>${(threshold*100).toFixed(1)}%</strong></p><p>Trades will be placed to match target allocation.</p>`, function() {
+                executeStrategy('Rebalance', '/api/strategies/rebalance', payload);
+            });
+        } else {
+            executeStrategy('Rebalance', '/api/strategies/rebalance', payload);
+        }
+        return false;
+    }
+
+    function runOpportunistic(e) {
+        e.preventDefault();
+        const symbols = document.getElementById('opp-symbols').value;
+        const threshold = parseFloat(document.getElementById('opp-threshold').value) / 100;
+        const amount = parseFloat(document.getElementById('opp-amount').value);
+        const dryRun = document.getElementById('opp-dry-run').checked;
+        const payload = { symbols, threshold, amount, dryRun };
+
+        if (!dryRun) {
+            confirmLive('Opportunistic', `<p>Symbols: <strong>${symbols}</strong></p><p>Dip: <strong>${(threshold*100).toFixed(1)}%</strong></p><p>Amount per dip: <strong>$${amount}</strong></p>`, function() {
+                executeStrategy('Opportunistic', '/api/strategies/opportunistic', payload);
+            });
+        } else {
+            executeStrategy('Opportunistic', '/api/strategies/opportunistic', payload);
+        }
+        return false;
+    }
+
+    function runCoveredCalls(e) {
+        e.preventDefault();
+        const symbols = document.getElementById('cc-symbols').value;
+        const dryRun = document.getElementById('cc-dry-run').checked;
+        const payload = { symbols, dryRun };
+
+        if (!dryRun) {
+            confirmLive('Covered Calls', `<p>Symbols: <strong>${symbols || 'All eligible'}</strong></p><p>Selling covered calls limits upside potential.</p>`, function() {
+                executeStrategy('Covered Calls', '/api/strategies/covered-calls', payload);
+            });
+        } else {
+            executeStrategy('Covered Calls', '/api/strategies/covered-calls', payload);
+        }
+        return false;
+    }
+
+    function runProtectivePuts(e) {
+        e.preventDefault();
+        const symbols = document.getElementById('pp-symbols').value;
+        const dryRun = document.getElementById('pp-dry-run').checked;
+        const payload = { symbols, dryRun };
+
+        if (!dryRun) {
+            confirmLive('Protective Puts', `<p>Symbols: <strong>${symbols || 'All eligible'}</strong></p><p>Protective puts cost premium but provide downside protection.</p>`, function() {
+                executeStrategy('Protective Puts', '/api/strategies/protective-puts', payload);
+            });
+        } else {
+            executeStrategy('Protective Puts', '/api/strategies/protective-puts', payload);
+        }
+        return false;
+    }
+
+    function loadData() {} // No auto-load needed for strategies page
+</script>
+{% endblock %}

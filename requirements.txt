@@ -21,6 +21,10 @@ pandas==2.2.3
 # Numerical computing
 numpy==1.26.4
 
+# Web dashboard
+# Flask web framework
+flask==3.0.0
+
 # Scheduling and automation
 # Job scheduling library
 schedule==1.2.2

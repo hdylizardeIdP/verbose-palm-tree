@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Activity{% endblock %}
+{% block page_title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="panel-header">
+        <h6><i class="bi bi-clock-history me-2"></i>Activity Log</h6>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadData()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+        </button>
+    </div>
+    <div class="panel-body p-0" id="activity-list">
+        <div class="text-center text-muted py-4">Loading...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadData() { loadActivityData(); }
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+{% endblock %}
