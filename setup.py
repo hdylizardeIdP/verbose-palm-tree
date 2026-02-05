@@ -17,6 +17,7 @@ setup(
         "numpy>=1.24.0",
         "schedule>=1.2.0",
         "python-json-logger>=2.0.7",
+        "cryptography>=43.0.0",
     ],
     entry_points={
         "console_scripts": [

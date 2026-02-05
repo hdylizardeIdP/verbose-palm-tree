@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from typing import Optional
 import json
-from schwab_app.utils.validation import validate_allocation, ValidationError
+from schwab_app.utils.validation import validate_allocation, validate_path, ValidationError
 
 
 class Config:
@@ -28,7 +28,13 @@ class Config:
         self.api_key = os.getenv("SCHWAB_API_KEY", "")
         self.app_secret = os.getenv("SCHWAB_APP_SECRET", "")
         self.callback_url = os.getenv("SCHWAB_CALLBACK_URL", "https://localhost:8182")
-        self.token_path = os.getenv("SCHWAB_TOKEN_PATH", ".schwab_tokens.json")
+        self.token_path = self._validate_token_path(
+            os.getenv("SCHWAB_TOKEN_PATH", ".schwab_tokens.json")
+        )
+
+        # Token encryption key (required for secure token storage)
+        # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+        self.token_encryption_key = os.getenv("SCHWAB_TOKEN_ENCRYPTION_KEY", "")
         
         # Account configuration
         self.account_number = os.getenv("SCHWAB_ACCOUNT_NUMBER", "")
@@ -54,6 +60,24 @@ class Config:
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
         self.log_file = os.getenv("LOG_FILE", "schwab_app.log")
     
+    def _validate_token_path(self, path: str) -> str:
+        """Validate token path to prevent path traversal attacks."""
+        try:
+            # Get current working directory as the allowed base
+            cwd = Path.cwd()
+
+            # Validate path - must be within current directory or its subdirectories
+            validated = validate_path(
+                path,
+                allowed_dir=cwd,
+                must_exist=False,
+                allow_absolute=False,
+                field_name="SCHWAB_TOKEN_PATH"
+            )
+            return str(validated)
+        except ValidationError as e:
+            raise ValueError(f"Invalid token path: {e}")
+
     def _load_target_allocation(self) -> dict:
         """Load and validate target portfolio allocation from environment or file"""
         allocation_str = os.getenv("TARGET_ALLOCATION", "")
@@ -83,12 +107,20 @@ class Config:
     def validate(self) -> bool:
         """
         Validate configuration
-        
+
         Returns:
             True if configuration is valid
+
+        Raises:
+            ValueError: If required configuration is missing.
         """
         if not self.api_key:
             raise ValueError("SCHWAB_API_KEY is required")
         if not self.app_secret:
             raise ValueError("SCHWAB_APP_SECRET is required")
+        if not self.token_encryption_key:
+            raise ValueError(
+                "SCHWAB_TOKEN_ENCRYPTION_KEY is required for secure token storage. "
+                "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
         return True
