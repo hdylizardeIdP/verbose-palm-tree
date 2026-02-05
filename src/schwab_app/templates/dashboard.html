@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="stat-label">Portfolio Value</div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-portfolio">--</div>
+            <div class="stat-change text-muted" id="stat-portfolio-change">--</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="stat-label">Cash Available</div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-cash">--</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="stat-label">Buying Power</div>
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-lightning-charge"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-buying-power">--</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="stat-label">Positions</div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-positions">--</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts + Activity Row -->
+<div class="row g-3 mb-4">
+    <!-- Allocation Chart -->
+    <div class="col-lg-5">
+        <div class="card-panel h-100">
+            <div class="panel-header">
+                <h6><i class="bi bi-pie-chart me-2"></i>Portfolio Allocation</h6>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container" style="height: 280px;">
+                    <canvas id="allocationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-7">
+        <div class="card-panel h-100">
+            <div class="panel-header">
+                <h6><i class="bi bi-clock-history me-2"></i>Recent Activity</h6>
+                <a href="{{ url_for('activity_page') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+            </div>
+            <div class="panel-body p-0" id="recent-activity">
+                <div class="text-center text-muted py-4">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Positions Table -->
+<div class="card-panel">
+    <div class="panel-header">
+        <h6><i class="bi bi-table me-2"></i>Holdings</h6>
+        <a href="{{ url_for('positions_page') }}" class="btn btn-sm btn-outline-secondary">View Details</a>
+    </div>
+    <div class="panel-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dashboard mb-0">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Avg Cost</th>
+                        <th class="text-end">Market Value</th>
+                        <th class="text-end">P/L</th>
+                    </tr>
+                </thead>
+                <tbody id="top-positions-body">
+                    <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Page-level data loader
+    function loadData() { loadDashboardData(); }
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+{% endblock %}

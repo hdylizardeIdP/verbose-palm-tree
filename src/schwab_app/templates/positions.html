@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Positions{% endblock %}
+{% block page_title %}Positions{% endblock %}
+
+{% block content %}
+<!-- Summary Row -->
+<div class="row g-3 mb-4" id="positions-summary">
+    <div class="col-md-3"><div class="stat-card"><div class="stat-label">Total Value</div><div class="stat-value">--</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-label">Total Cost</div><div class="stat-value">--</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-label">Total P/L</div><div class="stat-value">--</div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-label">Total Return</div><div class="stat-value">--</div></div></div>
+</div>
+
+<!-- Positions Table -->
+<div class="card-panel">
+    <div class="panel-header">
+        <h6><i class="bi bi-briefcase me-2"></i>All Positions</h6>
+    </div>
+    <div class="panel-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dashboard mb-0">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Avg Cost</th>
+                        <th class="text-end">Cost Basis</th>
+                        <th class="text-end">Market Value</th>
+                        <th class="text-end">P/L ($)</th>
+                        <th class="text-end">P/L (%)</th>
+                        <th class="text-end">Weight</th>
+                    </tr>
+                </thead>
+                <tbody id="positions-table-body">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadData() { loadPositionsData(); }
+    document.addEventListener('DOMContentLoaded', loadData);
+</script>
+{% endblock %}

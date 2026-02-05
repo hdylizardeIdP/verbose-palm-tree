@@ -1,0 +1,401 @@
+/* ── Variables ────────────────────────────────────────────────── */
+:root {
+    --sidebar-width: 240px;
+    --topbar-height: 56px;
+    --accent: #0d6efd;
+    --accent-glow: rgba(13, 110, 253, 0.15);
+    --green: #198754;
+    --red: #dc3545;
+    --card-bg: #1a1d23;
+    --sidebar-bg: #12151a;
+    --body-bg: #0f1117;
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+body {
+    background: var(--body-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────── */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-brand {
+    padding: 1.25rem 1.5rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.sidebar-brand i {
+    font-size: 1.4rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0.75rem 0;
+    margin: 0;
+    flex: 1;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1.5rem;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav li a:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-nav li a.active {
+    color: #fff;
+    background: var(--accent-glow);
+    border-left-color: var(--accent);
+}
+
+.sidebar-nav li a i {
+    font-size: 1.1rem;
+    width: 1.2rem;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Main Content ────────────────────────────────────────────── */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    height: var(--topbar-height);
+    padding: 0 1.5rem;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.topbar-title {
+    flex: 1;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+}
+
+.content-wrapper {
+    padding: 1.5rem;
+}
+
+/* ── Cards ────────────────────────────────────────────────────── */
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+}
+
+.stat-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.stat-card .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.stat-card .stat-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-card .stat-change {
+    font-size: 0.82rem;
+    margin-top: 0.25rem;
+}
+
+.card-panel {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.card-panel .panel-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-panel .panel-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.card-panel .panel-body {
+    padding: 1.25rem;
+}
+
+/* ── Tables ───────────────────────────────────────────────────── */
+.table-dashboard {
+    margin: 0;
+}
+
+.table-dashboard thead th {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+}
+
+.table-dashboard tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.table-dashboard tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── P/L Colors ───────────────────────────────────────────────── */
+.text-profit { color: var(--green) !important; }
+.text-loss { color: var(--red) !important; }
+
+/* ── Strategy Cards ───────────────────────────────────────────── */
+.strategy-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: border-color 0.2s;
+}
+
+.strategy-card:hover {
+    border-color: rgba(13, 110, 253, 0.3);
+}
+
+.strategy-card .strategy-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.strategy-card h6 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.strategy-card p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+}
+
+/* ── Forms ────────────────────────────────────────────────────── */
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem var(--accent-glow);
+}
+
+/* ── Activity Log ─────────────────────────────────────────────── */
+.activity-item {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-badge {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 0.45rem;
+    flex-shrink: 0;
+}
+
+.activity-badge.success { background: var(--green); }
+.activity-badge.error { background: var(--red); }
+.activity-badge.info { background: var(--accent); }
+.activity-badge.warning { background: #ffc107; }
+
+.activity-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Loading / Skeleton ───────────────────────────────────────── */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 0.25rem;
+}
+
+@keyframes skeleton-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.spinner-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    z-index: 10;
+}
+
+/* ── Dry Run Badge ────────────────────────────────────────────── */
+.dry-run-badge {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.live-badge {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* ── Result Modal ─────────────────────────────────────────────── */
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Config Display ───────────────────────────────────────────── */
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.config-item:last-child {
+    border-bottom: none;
+}
+
+.config-item .config-key {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.config-item .config-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.2rem;
+    }
+}
+
+/* ── Chart Container ──────────────────────────────────────────── */
+.chart-container {
+    position: relative;
+    width: 100%;
+}
