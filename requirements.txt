@@ -33,6 +33,10 @@ schedule==1.2.2
 # JSON logging formatter
 python-json-logger==2.0.7
 
+# MCP Server
+# Model Context Protocol SDK
+mcp==1.9.0
+
 # Security Notes:
 # - All versions pinned with == to prevent automatic updates
 # - Verify each update before deploying to production

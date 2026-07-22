@@ -18,6 +18,7 @@ setup(
         "flask>=3.0.0",
         "schedule>=1.2.0",
         "python-json-logger>=2.0.7",
+        "mcp>=1.9.0",
     ],
     package_data={
         "schwab_app": [
@@ -29,6 +30,8 @@ setup(
     entry_points={
         "console_scripts": [
             "schwab-invest=schwab_app.cli:main",
+            "schwab-mcp=schwab_mcp.server:main",
+            "schwab-mcp-auth=schwab_mcp.auth:main",
         ],
     },
     python_requires=">=3.8",
