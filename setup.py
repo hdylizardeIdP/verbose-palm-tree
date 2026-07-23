@@ -33,6 +33,7 @@ setup(
             "schwab-invest=schwab_app.cli:main",
             "schwab-mcp=schwab_mcp.server:main",
             "schwab-mcp-auth=schwab_mcp.auth:main",
+            "schwab-mcp-accounts=schwab_mcp.accounts:main",
         ],
     },
     python_requires=">=3.8",

@@ -39,6 +39,7 @@ def get_client() -> SchwabClient:
     global _client, _config
     if _client is None:
         _config = Config()
+        _config.validate(require_account=True)
         _client = SchwabClient(
             _config.api_key,
             _config.app_secret,
@@ -53,6 +54,7 @@ def get_account() -> str:
     global _config
     if _config is None:
         _config = Config()
+        _config.validate(require_account=True)
     return _config.account_number
 
 

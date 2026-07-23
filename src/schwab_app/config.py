@@ -104,9 +104,15 @@ class Config:
             "AGG": 0.15,  # 15% Bonds
         }
     
-    def validate(self) -> bool:
+    def validate(self, require_account: bool = False) -> bool:
         """
         Validate configuration
+
+        Args:
+            require_account: Also require SCHWAB_ACCOUNT_NUMBER. Off by default
+                because the account hash can only be looked up after
+                authenticating, so the auth and account-lookup flows must be
+                able to run without it.
 
         Returns:
             True if configuration is valid
@@ -122,5 +128,11 @@ class Config:
             raise ValueError(
                 "SCHWAB_TOKEN_ENCRYPTION_KEY is required for secure token storage. "
                 "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+        if require_account and not self.account_number:
+            raise ValueError(
+                "SCHWAB_ACCOUNT_NUMBER is required. This is the account hash, "
+                "not the brokerage account number. Look it up with: "
+                "python -m schwab_mcp.accounts"
             )
         return True

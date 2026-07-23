@@ -24,9 +24,11 @@ def main():
 
     config = Config()
 
-    if not config.api_key or not config.app_secret:
-        print("\nError: Missing credentials.")
-        print("Set SCHWAB_API_KEY and SCHWAB_APP_SECRET in your .env file.")
+    # Account hash isn't known until after this flow completes, so don't require it.
+    try:
+        config.validate()
+    except ValueError as e:
+        print(f"\nError: {e}")
         sys.exit(1)
 
     print(f"\nAPI Key: {config.api_key[:8]}...")
@@ -34,7 +36,8 @@ def main():
     print(f"Token path: {config.token_path}")
 
     print("\nInitiating OAuth flow...")
-    print("A browser window will open for you to log in to Schwab.\n")
+    print("You'll be given a URL to open, then asked to paste the")
+    print("redirect URL back here after logging in to Schwab.\n")
 
     try:
         client = SchwabClient(
