@@ -19,6 +19,7 @@ setup(
         "schedule>=1.2.0",
         "python-json-logger>=2.0.7",
         "cryptography>=43.0.0",
+        "mcp>=1.9.0",
     ],
     package_data={
         "schwab_app": [
@@ -30,6 +31,9 @@ setup(
     entry_points={
         "console_scripts": [
             "schwab-invest=schwab_app.cli:main",
+            "schwab-mcp=schwab_mcp.server:main",
+            "schwab-mcp-auth=schwab_mcp.auth:main",
+            "schwab-mcp-accounts=schwab_mcp.accounts:main",
         ],
     },
     python_requires=">=3.8",

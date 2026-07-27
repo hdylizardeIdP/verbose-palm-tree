@@ -15,6 +15,7 @@ from schwab_app.utils.token_encryption import (
     is_encrypted_token_file,
     migrate_plain_text_tokens,
 )
+from schwab_app.utils.validation import sanitize_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -79,94 +80,86 @@ class SchwabClient:
                     f"Failed to migrate plain text tokens to encrypted format: {e}"
                 )
 
-    def _create_token_write_callback(self) -> Callable[[dict], None]:
+    def _create_token_write_callback(self) -> Callable[..., None]:
         """Create a callback function for writing tokens with encryption."""
-        def write_token(token_data: dict) -> None:
+        # schwab-py invokes this as update_token(t, *args, **kwargs), so accept
+        # and ignore the extra positional arguments it passes.
+        def write_token(token_data: dict, *args, **kwargs) -> None:
             self._encryption.save_encrypted_tokens(token_data, self.token_path)
         return write_token
 
-    def _load_tokens(self) -> Optional[dict]:
-        """Load and decrypt tokens from file."""
-        if not self.token_path.exists():
-            return None
-        return self._encryption.load_encrypted_tokens(self.token_path)
+    def _create_token_read_callback(self) -> Callable[[], dict]:
+        """Create a callback function for reading encrypted tokens."""
+        def read_token() -> dict:
+            return self._encryption.load_encrypted_tokens(self.token_path)
+        return read_token
 
-    def authenticate(self) -> Client:
+    def authenticate(self, force_oauth: bool = False) -> Client:
         """
         Authenticate with Schwab API using encrypted token storage.
+
+        Args:
+            force_oauth: Run the interactive OAuth flow even if a token file
+                already exists, replacing it. Schwab refresh tokens expire after
+                about a week, and building a session from a stored token never
+                contacts Schwab, so an expired token cannot be detected here.
+                Re-authenticating is the only remedy.
 
         Returns:
             Authenticated Schwab client
 
         Raises:
             TokenEncryptionError: If token encryption/decryption fails.
+            FileNotFoundError: If the token file disappears while being read.
             Exception: If authentication fails.
         """
         try:
             # Try to use existing encrypted token
-            if self.token_path.exists():
+            if self.token_path.exists() and not force_oauth:
                 logger.info("Loading encrypted token file")
-                try:
-                    token_data = self._load_tokens()
-                    if token_data:
-                        # Create a temporary decrypted file for schwab-py
-                        # Then immediately re-encrypt after client creation
-                        import tempfile
-                        with tempfile.NamedTemporaryFile(
-                            mode='w', suffix='.json', delete=False
-                        ) as tmp:
-                            json.dump(token_data, tmp)
-                            tmp_path = tmp.name
-
-                        try:
-                            self._client = auth.client_from_token_file(
-                                tmp_path,
-                                self.api_key,
-                                self.app_secret,
-                                token_write_func=self._create_token_write_callback()
-                            )
-                        finally:
-                            # Always clean up temp file
-                            Path(tmp_path).unlink(missing_ok=True)
-                except TokenEncryptionError as e:
-                    logger.error(f"Failed to decrypt tokens: {e}")
-                    raise
+                # Hand schwab-py accessor functions rather than a file, so the
+                # decrypted token is never written to disk. client_from_token_file
+                # takes no write callback and would persist refreshes in plain text.
+                self._client = auth.client_from_access_functions(
+                    self.api_key,
+                    self.app_secret,
+                    self._create_token_read_callback(),
+                    self._create_token_write_callback(),
+                )
             else:
                 # Perform OAuth flow with encrypted token storage
                 logger.info("Performing OAuth authentication")
-                import tempfile
-                with tempfile.NamedTemporaryFile(
-                    mode='w', suffix='.json', delete=False
-                ) as tmp:
-                    tmp_path = tmp.name
-
-                try:
-                    self._client = auth.client_from_manual_flow(
-                        self.api_key,
-                        self.app_secret,
-                        self.callback_url,
-                        tmp_path,
-                        token_write_func=self._create_token_write_callback()
-                    )
-                    # Also encrypt the initial token file created by manual flow
-                    if Path(tmp_path).exists():
-                        with open(tmp_path, 'r') as f:
-                            initial_tokens = json.load(f)
-                        self._encryption.save_encrypted_tokens(
-                            initial_tokens, self.token_path
-                        )
-                finally:
-                    # Clean up temp file
-                    Path(tmp_path).unlink(missing_ok=True)
+                # schwab-py persists through token_write_func and only uses this
+                # path for a log line, but pass os.devnull so an unencrypted token
+                # cannot land on disk even if that behaviour changes.
+                self._client = auth.client_from_manual_flow(
+                    self.api_key,
+                    self.app_secret,
+                    self.callback_url,
+                    os.devnull,
+                    token_write_func=self._create_token_write_callback()
+                )
 
             logger.info("Successfully authenticated with Schwab API")
             return self._client
-        except TokenEncryptionError:
+        except (TokenEncryptionError, FileNotFoundError):
+            # Propagate storage problems as themselves; reporting them as bad
+            # credentials sends users off debugging the wrong thing.
             raise
         except Exception as e:
-            # Sanitize error message to avoid exposing sensitive details
-            logger.error("Authentication failed")
-            raise RuntimeError("Authentication failed. Check credentials and try again.")
+            # Keep the raised message sanitized. Log a sanitized cause so the
+            # failure is diagnosable, and chain the original for callers.
+            logger.error(
+                "Authentication failed: %s: %s",
+                type(e).__name__,
+                sanitize_for_log(str(e), max_length=300),
+            )
+            # Full traceback only at DEBUG, which is opt-in and documented as
+            # verbose, because exception text can carry response bodies.
+            logger.debug("Authentication failure detail", exc_info=True)
+            raise RuntimeError(
+                "Authentication failed. Check credentials and try again."
+            ) from e
     
     def get_client(self) -> Client:
         """Get authenticated client, authenticating if necessary"""

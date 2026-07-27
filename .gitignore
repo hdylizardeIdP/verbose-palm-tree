@@ -148,6 +148,9 @@ venv.bak/
 .schwab_tokens.json
 *_tokens.json
 
+# Session traces (may capture credentials from this repo's .env)
+.claude-trace/
+
 # Application logs
 schwab_app.log
 *.log
