@@ -20,6 +20,11 @@ rich==13.9.4
 pandas==2.2.3
 # Numerical computing
 numpy==1.26.4
+# Market data from Yahoo Finance
+# 0.2.33's crumb/cookie flow is broken against Yahoo's current API and fails
+# every request with a misleading "429 ... crumb=Edge: Too Many Requests"
+# error, even on the very first call. 1.5.2 fixes the crumb handshake.
+yfinance==1.5.2
 
 # Web dashboard
 # Flask web framework
@@ -32,6 +37,10 @@ schedule==1.2.2
 # Logging
 # JSON logging formatter
 python-json-logger==2.0.7
+
+# MCP Server
+# Model Context Protocol SDK
+mcp==1.9.0
 
 # Security
 # Cryptographic primitives for token encryption

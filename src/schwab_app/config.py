@@ -104,9 +104,12 @@ class Config:
             "AGG": 0.15,  # 15% Bonds
         }
     
-    def validate(self) -> bool:
+    def validate(self, require_account: bool = False) -> bool:
         """
         Validate configuration
+
+        Args:
+            require_account: If True, also require SCHWAB_ACCOUNT_NUMBER to be set.
 
         Returns:
             True if configuration is valid
@@ -123,4 +126,6 @@ class Config:
                 "SCHWAB_TOKEN_ENCRYPTION_KEY is required for secure token storage. "
                 "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
             )
+        if require_account and not self.account_number:
+            raise ValueError("SCHWAB_ACCOUNT_NUMBER is required")
         return True

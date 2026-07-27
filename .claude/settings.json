@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "schwab": {
+      "command": "/Users/david/verbose-palm-tree/.venv/bin/python3",
+      "args": ["-m", "schwab_mcp.server"],
+      "cwd": "/Users/david/verbose-palm-tree/src",
+      "env": {
+        "PYTHONPATH": "/Users/david/verbose-palm-tree/src"
+      }
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read",
+      "Edit",
+      "Write",
+      "mcp__schwab__*"
+    ]
+  }
+}
